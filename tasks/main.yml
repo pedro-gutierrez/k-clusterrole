@@ -1,0 +1,27 @@
+---
+- name: Delete {{ name }} cluster role & binding
+  shell: "kubectl delete {{ item }} {{ name }} --namespace={{ ns }}"
+  ignore_errors: yes
+  with_items:
+    - clusterrole
+    - clusterrolebinding
+
+- name: Wait for {{ name }} cluster role to be deleted
+  shell: "kubectl get clusterroles --namespace={{ ns }}"
+  register: result
+  until: result.stderr.find(name) == -1
+  retries: "{{ retry.max }}"
+  delay: "{{ retry.delay }}"
+
+- name: Wait for {{ name }} cluster role binding to be deleted
+  shell: "kubectl get clusterrolebindings --namespace={{ ns }}"
+  register: result
+  until: result.stderr.find(name) == -1
+  retries: "{{ retry.max }}"
+  delay: "{{ retry.delay }}"
+
+- name: Create {{ name }} cluster role and binding
+  shell: "kubectl create -f {{ yamls }}/{{ name }}-{{ item }}.yml"
+  with_items:
+    - clusterrole
+    - clusterrolebinding
